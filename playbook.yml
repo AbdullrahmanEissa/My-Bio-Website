@@ -1,0 +1,22 @@
+---
+- hosts: all
+  become: true
+  tasks:
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Deploy site on k3s
+      ansible.builtin.shell: kubectl create deployment site --image=abdueissa/site || true
+
+    - name: Expose site on NodePort
+      ansible.builtin.shell: kubectl expose deployment site --type=NodePort --port=80 || true
+
+    - name: Get NodePort of the site service
+      ansible.builtin.shell: kubectl get svc site -o jsonpath='{.spec.ports[0].nodePort}'
+      register: site_port
+
+    - name: Show the access URL
+      debug:
+        msg: "Access your site at: http://{{ ansible_host }}:{{ site_port.stdout }}"
